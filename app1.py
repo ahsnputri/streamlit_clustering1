@@ -123,15 +123,16 @@ elif page == "Clustering":
         score = silhouette_score(scaled_features, cluster_labels)
         st.success(f"Silhouette Score untuk k={k}: {score:.4f}")
 
-        # Unduh hasil clustering
-        buffer = BytesIO()
-        with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
-            df_result.to_excel(writer, index=False, sheet_name='Clustered Data')
-        st.download_button(
-            label="Download Hasil Clustering",
-            data=buffer.getvalue(),
-            file_name="hasil_clustering.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+                # Unduh hasil clustering
+        # buffer = BytesIO()
+        # with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+        #     df_result.to_excel(writer, index=False, sheet_name='Clustered Data')
+        # st.download_button(
+        #     label="Download Hasil Clustering",
+        #     data=buffer.getvalue(),
+        #     file_name="hasil_clustering.xlsx",
+        #     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        # )
     else:
         st.info("Tidak ada data untuk clustering. Silakan upload file terlebih dahulu.")
+
