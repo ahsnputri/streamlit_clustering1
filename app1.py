@@ -28,18 +28,25 @@ st.markdown("""
     }
     
     /* Style untuk login */
-    .login-container {
+    .login-box {
         max-width: 400px;
-        margin: 0 auto;
+        margin: 5rem auto;
         padding: 2rem;
         border-radius: 10px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        background-color: var(--card);
+        background-color: white;
     }
     
-    .login-input {
-        width: 100%;
-        margin-bottom: 1rem;
+    /* Pastikan semua tombol bisa diklik */
+    .stButton>button {
+        position: relative;
+        z-index: 1;
+        transition: all 0.3s ease;
+    }
+    
+    .stButton>button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
     
     /* Style untuk header */
@@ -48,16 +55,6 @@ st.markdown("""
         justify-content: space-between;
         align-items: center;
         margin-bottom: 1.5rem;
-    }
-    
-    .tabs-container {
-        flex-grow: 1;
-    }
-    
-    .profile-container {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
     }
     
     /* Style untuk card */
@@ -69,94 +66,62 @@ st.markdown("""
         margin-bottom: 1.5rem;
     }
     
-    /* Style untuk modal */
-    .modal {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0,0,0,0.5);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-    }
-    
-    .modal-content {
-        background-color: white;
-        padding: 2rem;
-        border-radius: 10px;
-        width: 50%;
+    /* Style untuk visualisasi */
+    .visualization-container {
         max-width: 600px;
+        margin: 0 auto;
     }
     
-    /* Style untuk tabel action */
+    /* Style untuk tombol action */
     .action-btn {
         background: none;
         border: none;
         cursor: pointer;
-        font-size: 1.2rem;
-        margin: 0 5px;
+        font-size: 1.1rem;
+        margin: 0 3px;
+        padding: 5px;
     }
     
-    /* Style untuk visualisasi */
-    .visualization-container {
-        max-width: 700px;
-        margin: 0 auto;
+    .action-btn:hover {
+        color: var(--primary);
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Fungsi untuk login
+# ========== FUNGSI LOGIN ==========
 def login_page():
-    st.markdown(
-        """
-        <div style='display: flex; justify-content: center; align-items: center; height: 80vh;'>
-            <div class='login-container'>
-                <h2 style='text-align: center; color: var(--primary); margin-bottom: 2rem;'>Login Aplikasi</h2>
-                <form>
-                    <div class='login-input'>
-                        <label style='display: block; margin-bottom: 0.5rem; color: var(--secondary);'>Username</label>
-                        <input type='text' id='username' style='width: 100%; padding: 0.5rem; border-radius: 4px; border: 1px solid #ced4da;' />
-                    </div>
-                    <div class='login-input'>
-                        <label style='display: block; margin-bottom: 0.5rem; color: var(--secondary);'>Password</label>
-                        <input type='password' id='password' style='width: 100%; padding: 0.5rem; border-radius: 4px; border: 1px solid #ced4da;' />
-                    </div>
-                    <div style='text-align: right; margin-bottom: 1.5rem;'>
-                        <a href='#' style='color: var(--secondary); text-decoration: none; font-size: 0.8rem;'>Lupa Password?</a>
-                    </div>
-                    <button type='button' onclick='handleLogin()' style='width: 100%; padding: 0.5rem; background-color: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer;'>Login</button>
-                </form>
-            </div>
-        </div>
-        <script>
-            function handleLogin() {
-                const username = document.getElementById('username').value;
-                const password = document.getElementById('password').value;
-                window.streamlitApi.runMethod('login', {username, password});
-            }
-        </script>
-        """,
-        unsafe_allow_html=True
-    )
+    st.markdown("""
+    <div class="login-box">
+        <h2 style="text-align: center; color: var(--primary); margin-bottom: 1.5rem;">Login Aplikasi</h2>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Input fields sebenarnya
+    username = st.text_input("Username", key="login_username", label_visibility="collapsed")
+    password = st.text_input("Password", type="password", key="login_password", label_visibility="collapsed")
+    
+    # Tombol login
+    col1, col2, col3 = st.columns([1,2,1])
+    with col2:
+        if st.button("Login", key="login_btn", use_container_width=True):
+            if username == "admin" and password == "admin123":
+                st.session_state.logged_in = True
+                st.session_state.page = "Beranda"
+                st.rerun()
+            else:
+                st.error("Username atau password salah")
 
-# Inisialisasi session state
+# ========== INISIALISASI SESSION STATE ==========
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
-if "show_modal" not in st.session_state:
-    st.session_state.show_modal = False
-    st.session_state.modal_type = ""
-    st.session_state.edit_index = None
+if "page" not in st.session_state:
+    st.session_state.page = "Beranda"
 
 if "data" not in st.session_state:
-    # Load data default
     try:
         st.session_state.data = pd.read_excel("dataset1.xlsx")
     except:
-        # Fallback jika file tidak ditemukan
         st.session_state.data = pd.DataFrame({
             'Product': ['Produk A', 'Produk B', 'Produk C', 'Produk D', 'Produk E'],
             'Tipe Bahan Baku': ['Tipe 1', 'Tipe 2', 'Tipe 1', 'Tipe 3', 'Tipe 2'],
@@ -165,143 +130,64 @@ if "data" not in st.session_state:
             'Rata-Rata Jumlah Penjualan Produk': [200, 150, 180, 220, 170]
         })
 
-# Handle login dari JavaScript
-if st.session_state.get('login'):
-    username = st.session_state.login['username']
-    password = st.session_state.login['password']
-    
-    if username == "admin" and password == "admin123":
-        st.session_state.logged_in = True
-        st.session_state.page = "Beranda"
-        st.rerun()
-    else:
-        st.error("Username atau password salah")
+if "show_form" not in st.session_state:
+    st.session_state.show_form = False
 
+if "edit_index" not in st.session_state:
+    st.session_state.edit_index = None
+
+# ========== HALAMAN LOGIN ==========
 if not st.session_state.logged_in:
     login_page()
     st.stop()
 
-# Header dengan profil dan tab
-def show_header(current_page):
-    st.markdown("""
-    <div class='header-container'>
-        <div class='tabs-container'>
-            <div data-testid='stTabs' style='width: 100%;'>
-                <div role='tablist'>
-                    <button role='tab' aria-selected='true'>🏠 Beranda</button>
-                    <button role='tab'>📦 Stok</button>
-                    <button role='tab'>📊 Clustering</button>
-                    <button role='tab'>📑 Laporan</button>
+# ========== KOMPONEN HEADER ==========
+def show_header(title):
+    col1, col2 = st.columns([4,1])
+    with col1:
+        st.title(title)
+    with col2:
+        # Dropdown profil
+        st.markdown("""
+        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px;">
+            <div style="text-align: right;">
+                <p style="margin: 0; font-weight: 500;">Admin</p>
+                <p style="margin: 0; font-size: 0.8rem; color: #6c757d;">Administrator</p>
+            </div>
+            <div style="position: relative;">
+                <div style="width: 40px; height: 40px; border-radius: 50%; background-color: var(--accent); 
+                            display: flex; align-items: center; justify-content: center; color: white; 
+                            font-weight: bold; cursor: pointer;" onclick="document.getElementById('profile-dropdown').style.display='block'">
+                    A
+                </div>
+                <div id="profile-dropdown" style="display: none; position: absolute; right: 0; background-color: white; 
+                                                min-width: 120px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.1); 
+                                                z-index: 1; border-radius: 4px; padding: 0.5rem 0;">
+                    <a href="#" onclick="handleLogout()" style="color: var(--secondary); text-decoration: none; 
+                                                            display: block; padding: 0.5rem 1rem;">Logout</a>
                 </div>
             </div>
         </div>
-        <div class='profile-container'>
-            <div style='text-align: right;'>
-                <p style='margin: 0; font-weight: 500;'>Admin</p>
-                <p style='margin: 0; font-size: 0.8rem; color: #6c757d;'>Administrator</p>
-            </div>
-            <div style='width: 40px; height: 40px; border-radius: 50%; background-color: var(--accent); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; cursor: pointer;' onclick='handleLogout()'>A</div>
-        </div>
-    </div>
-    <script>
-        function handleLogout() {
-            if (confirm('Apakah Anda yakin ingin logout?')) {
+        <script>
+            function handleLogout() {
                 window.streamlitApi.runMethod('logout', '');
             }
-        }
-    </script>
-    """, unsafe_allow_html=True)
+            
+            // Tutup dropdown saat klik di luar
+            window.onclick = function(event) {
+                if (!event.target.matches('div[onclick*="profile-dropdown"]')) {
+                    document.getElementById('profile-dropdown').style.display = 'none';
+                }
+            }
+        </script>
+        """, unsafe_allow_html=True)
 
-# Callback untuk logout
+# Handle logout
 if st.session_state.get('logout'):
     st.session_state.logged_in = False
     st.rerun()
 
-# Modal untuk form
-def show_modal():
-    if st.session_state.show_modal:
-        st.markdown("""
-        <div class='modal'>
-            <div class='modal-content'>
-        """, unsafe_allow_html=True)
-        
-        if st.session_state.modal_type == "add":
-            st.markdown("<h3>Tambah Produk Baru</h3>", unsafe_allow_html=True)
-            
-            with st.form("form_tambah"):
-                col1, col2 = st.columns(2)
-                with col1:
-                    produk = st.text_input("Nama Produk", key="modal_produk")
-                    tipe = st.text_input("Tipe Bahan Baku", key="modal_tipe")
-                with col2:
-                    harga = st.number_input("Harga Rata-Rata Bahan Baku", min_value=0, key="modal_harga")
-                    stok = st.number_input("Rata-Rata Stok Bahan Baku", min_value=0, key="modal_stok")
-                
-                jual = st.number_input("Rata-Rata Jumlah Penjualan Produk", min_value=0, key="modal_jual")
-                
-                col1, col2 = st.columns(2)
-                with col1:
-                    if st.form_submit_button("Simpan"):
-                        new_row = pd.DataFrame([[produk, tipe, harga, stok, jual]], columns=[
-                            'Product', 'Tipe Bahan Baku',
-                            'Harga Rata-Rata Bahan Baku',
-                            'Rata-Rata Stok Bahan Baku',
-                            'Rata-Rata Jumlah Penjualan Produk'
-                        ])
-                        st.session_state.data = pd.concat([st.session_state.data, new_row], ignore_index=True)
-                        st.session_state.show_modal = False
-                        st.rerun()
-                with col2:
-                    if st.form_submit_button("Batal"):
-                        st.session_state.show_modal = False
-                        st.rerun()
-        
-        elif st.session_state.modal_type == "edit":
-            st.markdown("<h3>Edit Produk</h3>", unsafe_allow_html=True)
-            
-            selected_row = st.session_state.data.iloc[st.session_state.edit_index]
-            
-            with st.form("form_edit"):
-                col1, col2 = st.columns(2)
-                with col1:
-                    produk = st.text_input("Nama Produk", value=selected_row['Product'], key="modal_edit_produk")
-                    tipe = st.text_input("Tipe Bahan Baku", value=selected_row['Tipe Bahan Baku'], key="modal_edit_tipe")
-                with col2:
-                    harga = st.number_input("Harga Rata-Rata Bahan Baku", 
-                                         min_value=0,
-                                         value=int(selected_row['Harga Rata-Rata Bahan Baku']),
-                                         key="modal_edit_harga")
-                    stok = st.number_input("Rata-Rata Stok Bahan Baku", 
-                                         min_value=0,
-                                         value=int(selected_row['Rata-Rata Stok Bahan Baku']),
-                                         key="modal_edit_stok")
-                
-                jual = st.number_input("Rata-Rata Jumlah Penjualan Produk", 
-                                     min_value=0,
-                                     value=int(selected_row['Rata-Rata Jumlah Penjualan Produk']),
-                                     key="modal_edit_jual")
-                
-                col1, col2 = st.columns(2)
-                with col1:
-                    if st.form_submit_button("Simpan Perubahan"):
-                        st.session_state.data.at[st.session_state.edit_index, 'Product'] = produk
-                        st.session_state.data.at[st.session_state.edit_index, 'Tipe Bahan Baku'] = tipe
-                        st.session_state.data.at[st.session_state.edit_index, 'Harga Rata-Rata Bahan Baku'] = harga
-                        st.session_state.data.at[st.session_state.edit_index, 'Rata-Rata Stok Bahan Baku'] = stok
-                        st.session_state.data.at[st.session_state.edit_index, 'Rata-Rata Jumlah Penjualan Produk'] = jual
-                        st.session_state.show_modal = False
-                        st.rerun()
-                with col2:
-                    if st.form_submit_button("Batal"):
-                        st.session_state.show_modal = False
-                        st.rerun()
-        
-        st.markdown("""
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-# Halaman Beranda
+# ========== HALAMAN BERANDA ==========
 def beranda_page():
     show_header("Dashboard Produk")
     
@@ -327,7 +213,7 @@ def beranda_page():
         # Visualisasi
         st.markdown("<div class='card'><h3>Visualisasi Clustering Produk</h3></div>", unsafe_allow_html=True)
         st.markdown("<div class='visualization-container'>", unsafe_allow_html=True)
-        fig, ax = plt.subplots(figsize=(5, 3.5))
+        fig, ax = plt.subplots(figsize=(6, 4))
         sns.scatterplot(
             x=scaled_features[:, 0],
             y=scaled_features[:, 2],
@@ -346,43 +232,100 @@ def beranda_page():
         stok_terendah = df.sort_values('Rata-Rata Stok Bahan Baku').head(5)[['Product', 'Rata-Rata Stok Bahan Baku']]
         st.dataframe(stok_terendah, use_container_width=True)
 
-# Halaman Stok
+# ========== HALAMAN STOK ==========
 def stok_page():
     show_header("Manajemen Stok Produk")
     
     if not st.session_state.data.empty:
         # Tombol tambah data
-        if st.button("➕ Tambah Produk", key="add_product"):
-            st.session_state.show_modal = True
-            st.session_state.modal_type = "add"
+        if st.button("➕ Tambah Produk", key="tambah_produk"):
+            st.session_state.show_form = True
+            st.session_state.edit_index = None
             st.rerun()
+        
+        # Form tambah/edit data
+        if st.session_state.show_form:
+            with st.form("produk_form"):
+                st.markdown("<div class='card'><h3>Form Produk</h3></div>", unsafe_allow_html=True)
+                
+                # Data yang akan diedit (jika ada)
+                if st.session_state.edit_index is not None:
+                    produk_data = st.session_state.data.iloc[st.session_state.edit_index]
+                else:
+                    produk_data = None
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    produk = st.text_input("Nama Produk", 
+                                         value=produk_data['Product'] if produk_data is not None else "")
+                    tipe = st.text_input("Tipe Bahan Baku", 
+                                       value=produk_data['Tipe Bahan Baku'] if produk_data is not None else "")
+                with col2:
+                    harga = st.number_input("Harga Rata-Rata Bahan Baku", 
+                                         min_value=0,
+                                         value=int(produk_data['Harga Rata-Rata Bahan Baku']) if produk_data is not None else 0)
+                    stok = st.number_input("Rata-Rata Stok Bahan Baku", 
+                                        min_value=0,
+                                        value=int(produk_data['Rata-Rata Stok Bahan Baku']) if produk_data is not None else 0)
+                
+                jual = st.number_input("Rata-Rata Jumlah Penjualan Produk", 
+                                     min_value=0,
+                                     value=int(produk_data['Rata-Rata Jumlah Penjualan Produk']) if produk_data is not None else 0)
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.form_submit_button("Simpan"):
+                        new_row = {
+                            'Product': produk,
+                            'Tipe Bahan Baku': tipe,
+                            'Harga Rata-Rata Bahan Baku': harga,
+                            'Rata-Rata Stok Bahan Baku': stok,
+                            'Rata-Rata Jumlah Penjualan Produk': jual
+                        }
+                        
+                        if st.session_state.edit_index is not None:
+                            # Update data yang ada
+                            st.session_state.data.loc[st.session_state.edit_index] = new_row
+                        else:
+                            # Tambah data baru
+                            st.session_state.data = st.session_state.data.append(new_row, ignore_index=True)
+                        
+                        st.session_state.show_form = False
+                        st.session_state.edit_index = None
+                        st.rerun()
+                
+                with col2:
+                    if st.form_submit_button("Batal"):
+                        st.session_state.show_form = False
+                        st.session_state.edit_index = None
+                        st.rerun()
         
         # Tampilkan data dengan action buttons
         st.markdown("<div class='card'><h3>Daftar Produk</h3></div>", unsafe_allow_html=True)
         
-        # Buat salinan data untuk ditampilkan
+        # Buat DataFrame untuk ditampilkan
         display_df = st.session_state.data.copy()
         
-        # Tambahkan kolom action
-        display_df['Action'] = ["✏️ 🗑️"] * len(display_df)
+        # Tambahkan kolom Action
+        display_df['Action'] = ""
         
         # Tampilkan tabel
         st.dataframe(display_df, use_container_width=True)
         
-        # Handle action buttons
-        cols = st.columns(5)
-        for i in range(len(st.session_state.data)):
-            if cols[i % 5].button(f"Edit {i}", key=f"edit_{i}", label_visibility="hidden"):
-                st.session_state.show_modal = True
-                st.session_state.modal_type = "edit"
-                st.session_state.edit_index = i
-                st.rerun()
-            
-            if cols[i % 5].button(f"Delete {i}", key=f"delete_{i}", label_visibility="hidden"):
-                st.session_state.data = st.session_state.data.drop(index=i).reset_index(drop=True)
-                st.rerun()
+        # Tambahkan tombol action untuk setiap baris
+        for idx in range(len(st.session_state.data)):
+            cols = st.columns([1,1,1,1,1,1,1,1,1,1])
+            with cols[-2]:
+                if st.button("✏️", key=f"edit_{idx}"):
+                    st.session_state.show_form = True
+                    st.session_state.edit_index = idx
+                    st.rerun()
+            with cols[-1]:
+                if st.button("🗑️", key=f"delete_{idx}"):
+                    st.session_state.data = st.session_state.data.drop(index=idx).reset_index(drop=True)
+                    st.rerun()
 
-# Halaman Clustering
+# ========== HALAMAN CLUSTERING ==========
 def clustering_page():
     show_header("Clustering Produk")
     
@@ -443,7 +386,7 @@ def clustering_page():
             score = silhouette_score(scaled_features, cluster_labels)
             st.success(f"Silhouette Score untuk k={k}: {score:.4f}")
 
-# Halaman Laporan
+# ========== HALAMAN LAPORAN ==========
 def laporan_page():
     show_header("Laporan Produk")
     
@@ -485,18 +428,20 @@ def laporan_page():
         st.markdown("<div class='card'><h3>Data Lengkap Produk</h3></div>", unsafe_allow_html=True)
         st.dataframe(df, use_container_width=True)
 
-# Routing halaman
-if st.session_state.get('page') == "Beranda":
-    beranda_page()
-elif st.session_state.get('page') == "Stok":
-    stok_page()
-elif st.session_state.get('page') == "Clustering":
-    clustering_page()
-elif st.session_state.get('page') == "Laporan":
-    laporan_page()
-else:
-    st.session_state.page = "Beranda"
-    beranda_page()
+# ========== NAVIGASI HALAMAN ==========
+pages = {
+    "Beranda": beranda_page,
+    "Stok": stok_page,
+    "Clustering": clustering_page,
+    "Laporan": laporan_page
+}
 
-# Tampilkan modal jika diperlukan
-show_modal()
+# Sidebar navigation
+st.sidebar.title("Navigasi")
+selected_page = st.sidebar.radio("Pilih Halaman", list(pages.keys()), index=list(pages.keys()).index(st.session_state.page))
+
+# Update session state
+st.session_state.page = selected_page
+
+# Tampilkan halaman yang dipilih
+pages[selected_page]()
