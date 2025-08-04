@@ -37,19 +37,27 @@ st.markdown("""
         background-color: var(--card);
     }
     
-    .login-input input {
-        width: 100% !important;
-        margin-bottom: 1rem !important;
+    .login-input {
+        width: 100%;
+        margin-bottom: 1rem;
     }
     
     /* Style untuk header */
-    .header {
+    .header-container {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 1rem 0;
-        border-bottom: 1px solid #e0e0e0;
-        margin-bottom: 2rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .tabs-container {
+        flex-grow: 1;
+    }
+    
+    .profile-container {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
     }
     
     /* Style untuk card */
@@ -61,42 +69,40 @@ st.markdown("""
         margin-bottom: 1.5rem;
     }
     
-    /* Style untuk dropdown profil */
-    .profile-dropdown {
-        position: relative;
-        display: inline-block;
+    /* Style untuk modal */
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
     }
     
-    .dropdown-content {
-        display: none;
-        position: absolute;
-        right: 0;
+    .modal-content {
         background-color: white;
-        min-width: 120px;
-        box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.1);
-        z-index: 1;
-        border-radius: 4px;
-        padding: 0.5rem 0;
+        padding: 2rem;
+        border-radius: 10px;
+        width: 50%;
+        max-width: 600px;
     }
     
-    .dropdown-content a {
-        color: var(--secondary);
-        padding: 0.5rem 1rem;
-        text-decoration: none;
-        display: block;
-    }
-    
-    .dropdown-content a:hover {
-        background-color: #f1f1f1;
-    }
-    
-    .profile-dropdown:hover .dropdown-content {
-        display: block;
+    /* Style untuk tabel action */
+    .action-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1.2rem;
+        margin: 0 5px;
     }
     
     /* Style untuk visualisasi */
-    .stPlotContainer {
-        max-width: 600px;
+    .visualization-container {
+        max-width: 700px;
         margin: 0 auto;
     }
 </style>
@@ -112,50 +118,46 @@ def login_page():
                 <form>
                     <div class='login-input'>
                         <label style='display: block; margin-bottom: 0.5rem; color: var(--secondary);'>Username</label>
-                        <input type='text' />
+                        <input type='text' id='username' style='width: 100%; padding: 0.5rem; border-radius: 4px; border: 1px solid #ced4da;' />
                     </div>
                     <div class='login-input'>
                         <label style='display: block; margin-bottom: 0.5rem; color: var(--secondary);'>Password</label>
-                        <input type='password' />
+                        <input type='password' id='password' style='width: 100%; padding: 0.5rem; border-radius: 4px; border: 1px solid #ced4da;' />
                     </div>
                     <div style='text-align: right; margin-bottom: 1.5rem;'>
                         <a href='#' style='color: var(--secondary); text-decoration: none; font-size: 0.8rem;'>Lupa Password?</a>
                     </div>
+                    <button type='button' onclick='handleLogin()' style='width: 100%; padding: 0.5rem; background-color: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer;'>Login</button>
                 </form>
             </div>
         </div>
+        <script>
+            function handleLogin() {
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                window.streamlitApi.runMethod('login', {username, password});
+            }
+        </script>
         """,
         unsafe_allow_html=True
     )
-    
-    # Input sebenarnya untuk login
-    username = st.text_input("Username", label_visibility="collapsed", key="login_username")
-    password = st.text_input("Password", type="password", label_visibility="collapsed", key="login_password")
-    
-    if st.button("Login", key="login_btn"):
-        if username == "admin" and password == "admin123":
-            st.session_state.logged_in = True
-            st.session_state.page = "Beranda"
-            st.rerun()
-        else:
-            st.error("Username atau password salah")
 
 # Inisialisasi session state
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
-if not st.session_state.logged_in:
-    login_page()
-    st.stop()
+if "show_modal" not in st.session_state:
+    st.session_state.show_modal = False
+    st.session_state.modal_type = ""
+    st.session_state.edit_index = None
 
-# Load data default
-@st.cache_data
-def load_default_data():
+if "data" not in st.session_state:
+    # Load data default
     try:
-        return pd.read_excel("dataset1.xlsx")
+        st.session_state.data = pd.read_excel("dataset1.xlsx")
     except:
         # Fallback jika file tidak ditemukan
-        return pd.DataFrame({
+        st.session_state.data = pd.DataFrame({
             'Product': ['Produk A', 'Produk B', 'Produk C', 'Produk D', 'Produk E'],
             'Tipe Bahan Baku': ['Tipe 1', 'Tipe 2', 'Tipe 1', 'Tipe 3', 'Tipe 2'],
             'Harga Rata-Rata Bahan Baku': [10000, 15000, 12000, 18000, 9000],
@@ -163,45 +165,144 @@ def load_default_data():
             'Rata-Rata Jumlah Penjualan Produk': [200, 150, 180, 220, 170]
         })
 
-if "data" not in st.session_state:
-    st.session_state.data = load_default_data()
+# Handle login dari JavaScript
+if st.session_state.get('login'):
+    username = st.session_state.login['username']
+    password = st.session_state.login['password']
+    
+    if username == "admin" and password == "admin123":
+        st.session_state.logged_in = True
+        st.session_state.page = "Beranda"
+        st.rerun()
+    else:
+        st.error("Username atau password salah")
 
-# Header dengan profil dan logout
+if not st.session_state.logged_in:
+    login_page()
+    st.stop()
+
+# Header dengan profil dan tab
 def show_header(current_page):
-    col1, col2 = st.columns([4, 1])
-    with col1:
-        st.markdown(f"<h1 style='color: var(--primary);'>{current_page}</h1>", unsafe_allow_html=True)
-    with col2:
-        st.markdown(
-            """
-            <div class="profile-dropdown" style='display: flex; align-items: center; justify-content: flex-end; gap: 1rem;'>
-                <div style='text-align: right;'>
-                    <p style='margin: 0; font-weight: 500;'>Admin</p>
-                    <p style='margin: 0; font-size: 0.8rem; color: #6c757d;'>Administrator</p>
-                </div>
-                <div style='width: 40px; height: 40px; border-radius: 50%; background-color: var(--accent); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; cursor: pointer;'>A</div>
-                <div class="dropdown-content">
-                    <a href="#" onclick="handleLogout()">Logout</a>
+    st.markdown("""
+    <div class='header-container'>
+        <div class='tabs-container'>
+            <div data-testid='stTabs' style='width: 100%;'>
+                <div role='tablist'>
+                    <button role='tab' aria-selected='true'>🏠 Beranda</button>
+                    <button role='tab'>📦 Stok</button>
+                    <button role='tab'>📊 Clustering</button>
+                    <button role='tab'>📑 Laporan</button>
                 </div>
             </div>
-            <script>
-                function handleLogout() {
-                    window.streamlitApi.runMethod('logout', '');
-                }
-            </script>
-            """,
-            unsafe_allow_html=True
-        )
+        </div>
+        <div class='profile-container'>
+            <div style='text-align: right;'>
+                <p style='margin: 0; font-weight: 500;'>Admin</p>
+                <p style='margin: 0; font-size: 0.8rem; color: #6c757d;'>Administrator</p>
+            </div>
+            <div style='width: 40px; height: 40px; border-radius: 50%; background-color: var(--accent); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; cursor: pointer;' onclick='handleLogout()'>A</div>
+        </div>
+    </div>
+    <script>
+        function handleLogout() {
+            if (confirm('Apakah Anda yakin ingin logout?')) {
+                window.streamlitApi.runMethod('logout', '');
+            }
+        }
+    </script>
+    """, unsafe_allow_html=True)
 
 # Callback untuk logout
 if st.session_state.get('logout'):
     st.session_state.logged_in = False
     st.rerun()
 
-# Navigasi dengan tab
-tab1, tab2, tab3, tab4 = st.tabs(["🏠 Beranda", "📦 Stok", "📊 Clustering", "📑 Laporan"])
+# Modal untuk form
+def show_modal():
+    if st.session_state.show_modal:
+        st.markdown("""
+        <div class='modal'>
+            <div class='modal-content'>
+        """, unsafe_allow_html=True)
+        
+        if st.session_state.modal_type == "add":
+            st.markdown("<h3>Tambah Produk Baru</h3>", unsafe_allow_html=True)
+            
+            with st.form("form_tambah"):
+                col1, col2 = st.columns(2)
+                with col1:
+                    produk = st.text_input("Nama Produk", key="modal_produk")
+                    tipe = st.text_input("Tipe Bahan Baku", key="modal_tipe")
+                with col2:
+                    harga = st.number_input("Harga Rata-Rata Bahan Baku", min_value=0, key="modal_harga")
+                    stok = st.number_input("Rata-Rata Stok Bahan Baku", min_value=0, key="modal_stok")
+                
+                jual = st.number_input("Rata-Rata Jumlah Penjualan Produk", min_value=0, key="modal_jual")
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.form_submit_button("Simpan"):
+                        new_row = pd.DataFrame([[produk, tipe, harga, stok, jual]], columns=[
+                            'Product', 'Tipe Bahan Baku',
+                            'Harga Rata-Rata Bahan Baku',
+                            'Rata-Rata Stok Bahan Baku',
+                            'Rata-Rata Jumlah Penjualan Produk'
+                        ])
+                        st.session_state.data = pd.concat([st.session_state.data, new_row], ignore_index=True)
+                        st.session_state.show_modal = False
+                        st.rerun()
+                with col2:
+                    if st.form_submit_button("Batal"):
+                        st.session_state.show_modal = False
+                        st.rerun()
+        
+        elif st.session_state.modal_type == "edit":
+            st.markdown("<h3>Edit Produk</h3>", unsafe_allow_html=True)
+            
+            selected_row = st.session_state.data.iloc[st.session_state.edit_index]
+            
+            with st.form("form_edit"):
+                col1, col2 = st.columns(2)
+                with col1:
+                    produk = st.text_input("Nama Produk", value=selected_row['Product'], key="modal_edit_produk")
+                    tipe = st.text_input("Tipe Bahan Baku", value=selected_row['Tipe Bahan Baku'], key="modal_edit_tipe")
+                with col2:
+                    harga = st.number_input("Harga Rata-Rata Bahan Baku", 
+                                         min_value=0,
+                                         value=int(selected_row['Harga Rata-Rata Bahan Baku']),
+                                         key="modal_edit_harga")
+                    stok = st.number_input("Rata-Rata Stok Bahan Baku", 
+                                         min_value=0,
+                                         value=int(selected_row['Rata-Rata Stok Bahan Baku']),
+                                         key="modal_edit_stok")
+                
+                jual = st.number_input("Rata-Rata Jumlah Penjualan Produk", 
+                                     min_value=0,
+                                     value=int(selected_row['Rata-Rata Jumlah Penjualan Produk']),
+                                     key="modal_edit_jual")
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.form_submit_button("Simpan Perubahan"):
+                        st.session_state.data.at[st.session_state.edit_index, 'Product'] = produk
+                        st.session_state.data.at[st.session_state.edit_index, 'Tipe Bahan Baku'] = tipe
+                        st.session_state.data.at[st.session_state.edit_index, 'Harga Rata-Rata Bahan Baku'] = harga
+                        st.session_state.data.at[st.session_state.edit_index, 'Rata-Rata Stok Bahan Baku'] = stok
+                        st.session_state.data.at[st.session_state.edit_index, 'Rata-Rata Jumlah Penjualan Produk'] = jual
+                        st.session_state.show_modal = False
+                        st.rerun()
+                with col2:
+                    if st.form_submit_button("Batal"):
+                        st.session_state.show_modal = False
+                        st.rerun()
+        
+        st.markdown("""
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
-with tab1:  # Beranda
+# Halaman Beranda
+def beranda_page():
     show_header("Dashboard Produk")
     
     if not st.session_state.data.empty:
@@ -225,7 +326,8 @@ with tab1:  # Beranda
         
         # Visualisasi
         st.markdown("<div class='card'><h3>Visualisasi Clustering Produk</h3></div>", unsafe_allow_html=True)
-        fig, ax = plt.subplots(figsize=(6, 4))
+        st.markdown("<div class='visualization-container'>", unsafe_allow_html=True)
+        fig, ax = plt.subplots(figsize=(5, 3.5))
         sns.scatterplot(
             x=scaled_features[:, 0],
             y=scaled_features[:, 2],
@@ -237,104 +339,51 @@ with tab1:  # Beranda
         plt.xlabel('Harga Rata-Rata Bahan Baku (Scaled)')
         plt.ylabel('Rata-Rata Jumlah Penjualan Produk (Scaled)')
         st.pyplot(fig)
+        st.markdown("</div>", unsafe_allow_html=True)
         
         # 5 produk dengan stok paling sedikit
         st.markdown("<div class='card'><h3>5 Produk dengan Stok Paling Sedikit</h3></div>", unsafe_allow_html=True)
         stok_terendah = df.sort_values('Rata-Rata Stok Bahan Baku').head(5)[['Product', 'Rata-Rata Stok Bahan Baku']]
         st.dataframe(stok_terendah, use_container_width=True)
 
-with tab2:  # Stok
+# Halaman Stok
+def stok_page():
     show_header("Manajemen Stok Produk")
     
     if not st.session_state.data.empty:
         # Tombol tambah data
         if st.button("➕ Tambah Produk", key="add_product"):
-            st.session_state.show_add_form = True
+            st.session_state.show_modal = True
+            st.session_state.modal_type = "add"
+            st.rerun()
         
-        if getattr(st.session_state, 'show_add_form', False):
-            with st.form("form_tambah"):
-                st.markdown("<div class='card'><h3>Tambah Produk Baru</h3></div>", unsafe_allow_html=True)
-                col1, col2 = st.columns(2)
-                with col1:
-                    produk = st.text_input("Nama Produk")
-                    tipe = st.text_input("Tipe Bahan Baku")
-                    harga = st.number_input("Harga Rata-Rata Bahan Baku", min_value=0)
-                with col2:
-                    stok = st.number_input("Rata-Rata Stok Bahan Baku", min_value=0)
-                    jual = st.number_input("Rata-Rata Jumlah Penjualan Produk", min_value=0)
-                
-                col1, col2 = st.columns(2)
-                with col1:
-                    if st.form_submit_button("Simpan"):
-                        new_row = pd.DataFrame([[produk, tipe, harga, stok, jual]], columns=[
-                            'Product', 'Tipe Bahan Baku',
-                            'Harga Rata-Rata Bahan Baku',
-                            'Rata-Rata Stok Bahan Baku',
-                            'Rata-Rata Jumlah Penjualan Produk'
-                        ])
-                        st.session_state.data = pd.concat([st.session_state.data, new_row], ignore_index=True)
-                        st.session_state.show_add_form = False
-                        st.success("Produk berhasil ditambahkan!")
-                        st.rerun()
-                with col2:
-                    if st.form_submit_button("Batal"):
-                        st.session_state.show_add_form = False
-                        st.rerun()
-        
-        # Tampilkan data dengan opsi edit/hapus
+        # Tampilkan data dengan action buttons
         st.markdown("<div class='card'><h3>Daftar Produk</h3></div>", unsafe_allow_html=True)
         
-        # Buat dataframe untuk ditampilkan
+        # Buat salinan data untuk ditampilkan
         display_df = st.session_state.data.copy()
         
-        # Tampilkan tabel dengan kolom aksi
+        # Tambahkan kolom action
+        display_df['Action'] = ["✏️ 🗑️"] * len(display_df)
+        
+        # Tampilkan tabel
         st.dataframe(display_df, use_container_width=True)
         
-        # Form edit
-        st.markdown("<div class='card'><h3>Edit Produk</h3></div>", unsafe_allow_html=True)
-        selected_index = st.number_input("Pilih nomor baris yang akan diedit", 
-                                      min_value=0, 
-                                      max_value=len(st.session_state.data)-1,
-                                      step=1,
-                                      key="edit_index")
-        
-        if selected_index >= 0 and selected_index < len(st.session_state.data):
-            selected_row = st.session_state.data.iloc[selected_index]
+        # Handle action buttons
+        cols = st.columns(5)
+        for i in range(len(st.session_state.data)):
+            if cols[i % 5].button(f"Edit {i}", key=f"edit_{i}", label_visibility="hidden"):
+                st.session_state.show_modal = True
+                st.session_state.modal_type = "edit"
+                st.session_state.edit_index = i
+                st.rerun()
             
-            with st.form("form_edit"):
-                col1, col2 = st.columns(2)
-                with col1:
-                    produk = st.text_input("Nama Produk", value=selected_row['Product'], key="edit_produk")
-                    tipe = st.text_input("Tipe Bahan Baku", value=selected_row['Tipe Bahan Baku'], key="edit_tipe")
-                    harga = st.number_input("Harga Rata-Rata Bahan Baku", 
-                                         min_value=0,
-                                         value=int(selected_row['Harga Rata-Rata Bahan Baku']),
-                                         key="edit_harga")
-                with col2:
-                    stok = st.number_input("Rata-Rata Stok Bahan Baku", 
-                                         min_value=0,
-                                         value=int(selected_row['Rata-Rata Stok Bahan Baku']),
-                                         key="edit_stok")
-                    jual = st.number_input("Rata-Rata Jumlah Penjualan Produk", 
-                                         min_value=0,
-                                         value=int(selected_row['Rata-Rata Jumlah Penjualan Produk']),
-                                         key="edit_jual")
-                
-                col1, col2 = st.columns(2)
-                with col1:
-                    if st.form_submit_button("Simpan Perubahan"):
-                        st.session_state.data.at[selected_index, 'Product'] = produk
-                        st.session_state.data.at[selected_index, 'Tipe Bahan Baku'] = tipe
-                        st.session_state.data.at[selected_index, 'Harga Rata-Rata Bahan Baku'] = harga
-                        st.session_state.data.at[selected_index, 'Rata-Rata Stok Bahan Baku'] = stok
-                        st.session_state.data.at[selected_index, 'Rata-Rata Jumlah Penjualan Produk'] = jual
-                        st.success("Perubahan berhasil disimpan!")
-                        st.rerun()
-                with col2:
-                    if st.form_submit_button("Batal"):
-                        st.rerun()
+            if cols[i % 5].button(f"Delete {i}", key=f"delete_{i}", label_visibility="hidden"):
+                st.session_state.data = st.session_state.data.drop(index=i).reset_index(drop=True)
+                st.rerun()
 
-with tab3:  # Clustering
+# Halaman Clustering
+def clustering_page():
     show_header("Clustering Produk")
     
     st.markdown("<div class='card'><h3>Upload Data Produk</h3></div>", unsafe_allow_html=True)
@@ -376,6 +425,7 @@ with tab3:  # Clustering
             
             # Visualisasi
             st.markdown("<div class='card'><h3>Visualisasi Cluster</h3></div>", unsafe_allow_html=True)
+            st.markdown("<div class='visualization-container'>", unsafe_allow_html=True)
             fig, ax = plt.subplots(figsize=(6, 4))
             sns.scatterplot(
                 x=scaled_features[:, 0],
@@ -388,11 +438,13 @@ with tab3:  # Clustering
             plt.xlabel('Harga Rata-Rata Bahan Baku (Scaled)')
             plt.ylabel('Rata-Rata Jumlah Penjualan Produk (Scaled)')
             st.pyplot(fig)
+            st.markdown("</div>", unsafe_allow_html=True)
             
             score = silhouette_score(scaled_features, cluster_labels)
             st.success(f"Silhouette Score untuk k={k}: {score:.4f}")
 
-with tab4:  # Laporan
+# Halaman Laporan
+def laporan_page():
     show_header("Laporan Produk")
     
     if not st.session_state.data.empty:
@@ -432,3 +484,19 @@ with tab4:  # Laporan
         # Tabel data lengkap
         st.markdown("<div class='card'><h3>Data Lengkap Produk</h3></div>", unsafe_allow_html=True)
         st.dataframe(df, use_container_width=True)
+
+# Routing halaman
+if st.session_state.get('page') == "Beranda":
+    beranda_page()
+elif st.session_state.get('page') == "Stok":
+    stok_page()
+elif st.session_state.get('page') == "Clustering":
+    clustering_page()
+elif st.session_state.get('page') == "Laporan":
+    laporan_page()
+else:
+    st.session_state.page = "Beranda"
+    beranda_page()
+
+# Tampilkan modal jika diperlukan
+show_modal()
