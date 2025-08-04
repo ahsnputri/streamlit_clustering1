@@ -12,7 +12,7 @@ st.set_page_config(
     page_title="Clustering Produk",
     layout="wide",
     page_icon="🛒",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
 # CSS Kustom
@@ -28,25 +28,18 @@ st.markdown("""
     }
     
     /* Style untuk login */
-    .login-box {
-        max-width: 400px;
-        margin: 5rem auto;
+    .login-container {
+        max-width: 320px;
+        margin: 100px auto;
         padding: 2rem;
-        border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         background-color: white;
     }
     
-    /* Pastikan semua tombol bisa diklik */
-    .stButton>button {
-        position: relative;
-        z-index: 1;
-        transition: all 0.3s ease;
-    }
-    
-    .stButton>button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    .login-input {
+        width: 100%;
+        margin-bottom: 1rem;
     }
     
     /* Style untuk header */
@@ -54,16 +47,115 @@ st.markdown("""
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 1.5rem;
+        padding: 1rem 2rem;
+        border-bottom: 1px solid #e0e0e0;
+        margin-bottom: 2rem;
+    }
+    
+    .tabs-container {
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .tab-btn {
+        padding: 0.5rem 1rem;
+        border: none;
+        background: none;
+        cursor: pointer;
+        font-size: 1rem;
+        color: #555;
+        border-radius: 4px;
+    }
+    
+    .tab-btn:hover {
+        background-color: #f0f0f0;
+    }
+    
+    .tab-btn.active {
+        color: var(--primary);
+        font-weight: 600;
+        border-bottom: 2px solid var(--primary);
+    }
+    
+    /* Style untuk profil dropdown */
+    .profile-container {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+    }
+    
+    .profile-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background-color: var(--accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+    }
+    
+    .dropdown-menu {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background: white;
+        border-radius: 4px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        padding: 0.5rem 0;
+        min-width: 120px;
+        z-index: 100;
+        display: none;
+    }
+    
+    .dropdown-item {
+        padding: 0.5rem 1rem;
+        color: #333;
+        text-decoration: none;
+        display: block;
+    }
+    
+    .dropdown-item:hover {
+        background-color: #f5f5f5;
+        color: var(--primary);
+    }
+    
+    .profile-container:hover .dropdown-menu {
+        display: block;
     }
     
     /* Style untuk card */
     .card {
         background-color: var(--card);
-        border-radius: 10px;
+        border-radius: 8px;
         padding: 1.5rem;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         margin-bottom: 1.5rem;
+    }
+    
+    /* Style untuk tabel */
+    .dataframe {
+        width: 100%;
+    }
+    
+    .action-cell {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .action-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1.1rem;
+        padding: 0 5px;
+    }
+    
+    .action-btn:hover {
+        color: var(--primary);
     }
     
     /* Style untuk visualisasi */
@@ -72,18 +164,14 @@ st.markdown("""
         margin: 0 auto;
     }
     
-    /* Style untuk tombol action */
-    .action-btn {
-        background: none;
-        border: none;
-        cursor: pointer;
-        font-size: 1.1rem;
-        margin: 0 3px;
-        padding: 5px;
+    /* Hide Streamlit sidebar */
+    section[data-testid="stSidebar"] {
+        display: none !important;
     }
     
-    .action-btn:hover {
-        color: var(--primary);
+    /* Hide Streamlit footer */
+    footer {
+        display: none !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -91,25 +179,26 @@ st.markdown("""
 # ========== FUNGSI LOGIN ==========
 def login_page():
     st.markdown("""
-    <div class="login-box">
-        <h2 style="text-align: center; color: var(--primary); margin-bottom: 1.5rem;">Login Aplikasi</h2>
+    <div class="login-container">
+        <h2 style="text-align: center; color: var(--primary); margin-bottom: 1.5rem;">Login</h2>
+        <div class="login-input">
+            <label style="display: block; margin-bottom: 0.5rem; color: #555;">Username</label>
+            <input type="text" id="username" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        <div class="login-input">
+            <label style="display: block; margin-bottom: 0.5rem; color: #555;">Password</label>
+            <input type="password" id="password" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        <button onclick="handleLogin()" style="width: 100%; padding: 0.5rem; background-color: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer; margin-top: 1rem;">Login</button>
     </div>
+    <script>
+        function handleLogin() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            window.streamlitApi.runMethod('login', {username, password});
+        }
+    </script>
     """, unsafe_allow_html=True)
-    
-    # Input fields sebenarnya
-    username = st.text_input("Username", key="login_username", label_visibility="collapsed")
-    password = st.text_input("Password", type="password", key="login_password", label_visibility="collapsed")
-    
-    # Tombol login
-    col1, col2, col3 = st.columns([1,2,1])
-    with col2:
-        if st.button("Login", key="login_btn", use_container_width=True):
-            if username == "admin" and password == "admin123":
-                st.session_state.logged_in = True
-                st.session_state.page = "Beranda"
-                st.rerun()
-            else:
-                st.error("Username atau password salah")
 
 # ========== INISIALISASI SESSION STATE ==========
 if "logged_in" not in st.session_state:
@@ -139,57 +228,65 @@ if "edit_index" not in st.session_state:
 # ========== HALAMAN LOGIN ==========
 if not st.session_state.logged_in:
     login_page()
+    
+    # Handle login dari JavaScript
+    if st.session_state.get('login'):
+        username = st.session_state.login['username']
+        password = st.session_state.login['password']
+        
+        if username == "admin" and password == "admin123":
+            st.session_state.logged_in = True
+            st.session_state.page = "Beranda"
+            st.rerun()
+        else:
+            st.error("Username atau password salah")
+    
     st.stop()
 
 # ========== KOMPONEN HEADER ==========
-def show_header(title):
-    col1, col2 = st.columns([4,1])
-    with col1:
-        st.title(title)
-    with col2:
-        # Dropdown profil
-        st.markdown("""
-        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px;">
-            <div style="text-align: right;">
+def show_header():
+    st.markdown(f"""
+    <div class="header-container">
+        <div class="tabs-container">
+            <button class="tab-btn {'active' if st.session_state.page == 'Beranda' else ''}" onclick="navigate('Beranda')">🏠 Beranda</button>
+            <button class="tab-btn {'active' if st.session_state.page == 'Stok' else ''}" onclick="navigate('Stok')">📦 Stok</button>
+            <button class="tab-btn {'active' if st.session_state.page == 'Clustering' else ''}" onclick="navigate('Clustering')">📊 Clustering</button>
+            <button class="tab-btn {'active' if st.session_state.page == 'Laporan' else ''}" onclick="navigate('Laporan')">📑 Laporan</button>
+        </div>
+        <div class="profile-container">
+            <div>
                 <p style="margin: 0; font-weight: 500;">Admin</p>
-                <p style="margin: 0; font-size: 0.8rem; color: #6c757d;">Administrator</p>
+                <p style="margin: 0; font-size: 0.8rem; color: #777;">Administrator</p>
             </div>
-            <div style="position: relative;">
-                <div style="width: 40px; height: 40px; border-radius: 50%; background-color: var(--accent); 
-                            display: flex; align-items: center; justify-content: center; color: white; 
-                            font-weight: bold; cursor: pointer;" onclick="document.getElementById('profile-dropdown').style.display='block'">
-                    A
-                </div>
-                <div id="profile-dropdown" style="display: none; position: absolute; right: 0; background-color: white; 
-                                                min-width: 120px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.1); 
-                                                z-index: 1; border-radius: 4px; padding: 0.5rem 0;">
-                    <a href="#" onclick="handleLogout()" style="color: var(--secondary); text-decoration: none; 
-                                                            display: block; padding: 0.5rem 1rem;">Logout</a>
-                </div>
+            <div class="profile-avatar">A</div>
+            <div class="dropdown-menu">
+                <a href="#" class="dropdown-item" onclick="logout()">Logout</a>
             </div>
         </div>
-        <script>
-            function handleLogout() {
-                window.streamlitApi.runMethod('logout', '');
-            }
-            
-            // Tutup dropdown saat klik di luar
-            window.onclick = function(event) {
-                if (!event.target.matches('div[onclick*="profile-dropdown"]')) {
-                    document.getElementById('profile-dropdown').style.display = 'none';
-                }
-            }
-        </script>
-        """, unsafe_allow_html=True)
+    </div>
+    <script>
+        function navigate(page) {
+            window.streamlitApi.runMethod('navigate', {page});
+        }
+        
+        function logout() {
+            window.streamlitApi.runMethod('logout', '');
+        }
+    </script>
+    """, unsafe_allow_html=True)
 
-# Handle logout
+# Handle navigasi dan logout
+if st.session_state.get('navigate'):
+    st.session_state.page = st.session_state.navigate['page']
+    st.rerun()
+
 if st.session_state.get('logout'):
     st.session_state.logged_in = False
     st.rerun()
 
 # ========== HALAMAN BERANDA ==========
 def beranda_page():
-    show_header("Dashboard Produk")
+    show_header()
     
     if not st.session_state.data.empty:
         df = st.session_state.data.copy()
@@ -234,7 +331,7 @@ def beranda_page():
 
 # ========== HALAMAN STOK ==========
 def stok_page():
-    show_header("Manajemen Stok Produk")
+    show_header()
     
     if not st.session_state.data.empty:
         # Tombol tambah data
@@ -288,7 +385,7 @@ def stok_page():
                             st.session_state.data.loc[st.session_state.edit_index] = new_row
                         else:
                             # Tambah data baru
-                            st.session_state.data = st.session_state.data.append(new_row, ignore_index=True)
+                            st.session_state.data = pd.concat([st.session_state.data, pd.DataFrame([new_row])], ignore_index=True)
                         
                         st.session_state.show_form = False
                         st.session_state.edit_index = None
@@ -303,31 +400,39 @@ def stok_page():
         # Tampilkan data dengan action buttons
         st.markdown("<div class='card'><h3>Daftar Produk</h3></div>", unsafe_allow_html=True)
         
-        # Buat DataFrame untuk ditampilkan
+        # Buat DataFrame untuk ditampilkan dengan kolom Action
         display_df = st.session_state.data.copy()
-        
-        # Tambahkan kolom Action
-        display_df['Action'] = ""
+        display_df['Action'] = ["✏️ 🗑️"] * len(display_df)
         
         # Tampilkan tabel
-        st.dataframe(display_df, use_container_width=True)
+        st.dataframe(
+            display_df,
+            column_config={
+                "Action": st.column_config.Column(
+                    "Action",
+                    width="small",
+                    help="Edit atau hapus produk"
+                )
+            },
+            use_container_width=True
+        )
         
-        # Tambahkan tombol action untuk setiap baris
+        # Handle action buttons
         for idx in range(len(st.session_state.data)):
-            cols = st.columns([1,1,1,1,1,1,1,1,1,1])
+            cols = st.columns(7)
             with cols[-2]:
-                if st.button("✏️", key=f"edit_{idx}"):
+                if st.button("Edit", key=f"edit_{idx}", use_container_width=True):
                     st.session_state.show_form = True
                     st.session_state.edit_index = idx
                     st.rerun()
             with cols[-1]:
-                if st.button("🗑️", key=f"delete_{idx}"):
+                if st.button("Hapus", key=f"delete_{idx}", use_container_width=True):
                     st.session_state.data = st.session_state.data.drop(index=idx).reset_index(drop=True)
                     st.rerun()
 
 # ========== HALAMAN CLUSTERING ==========
 def clustering_page():
-    show_header("Clustering Produk")
+    show_header()
     
     st.markdown("<div class='card'><h3>Upload Data Produk</h3></div>", unsafe_allow_html=True)
     uploaded_file = st.file_uploader("Pilih file Excel (.xlsx)", type=["xlsx"], label_visibility="collapsed", key="cluster_upload")
@@ -388,7 +493,7 @@ def clustering_page():
 
 # ========== HALAMAN LAPORAN ==========
 def laporan_page():
-    show_header("Laporan Produk")
+    show_header()
     
     if not st.session_state.data.empty:
         df = st.session_state.data.copy()
@@ -428,20 +533,12 @@ def laporan_page():
         st.markdown("<div class='card'><h3>Data Lengkap Produk</h3></div>", unsafe_allow_html=True)
         st.dataframe(df, use_container_width=True)
 
-# ========== NAVIGASI HALAMAN ==========
-pages = {
-    "Beranda": beranda_page,
-    "Stok": stok_page,
-    "Clustering": clustering_page,
-    "Laporan": laporan_page
-}
-
-# Sidebar navigation
-st.sidebar.title("Navigasi")
-selected_page = st.sidebar.radio("Pilih Halaman", list(pages.keys()), index=list(pages.keys()).index(st.session_state.page))
-
-# Update session state
-st.session_state.page = selected_page
-
-# Tampilkan halaman yang dipilih
-pages[selected_page]()
+# ========== ROUTING HALAMAN ==========
+if st.session_state.page == "Beranda":
+    beranda_page()
+elif st.session_state.page == "Stok":
+    stok_page()
+elif st.session_state.page == "Clustering":
+    clustering_page()
+elif st.session_state.page == "Laporan":
+    laporan_page()
