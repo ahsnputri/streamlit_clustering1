@@ -244,14 +244,16 @@ if not st.session_state.logged_in:
     st.stop()
 
 # ========== KOMPONEN HEADER ==========
+# In the show_header() function, replace the JavaScript part with this corrected version:
+
 def show_header():
     st.markdown(f"""
     <div class="header-container">
         <div class="tabs-container">
-            <button class="tab-btn {'active' if st.session_state.page == 'Beranda' else ''}" onclick="navigate('Beranda')">🏠 Beranda</button>
-            <button class="tab-btn {'active' if st.session_state.page == 'Stok' else ''}" onclick="navigate('Stok')">📦 Stok</button>
-            <button class="tab-btn {'active' if st.session_state.page == 'Clustering' else ''}" onclick="navigate('Clustering')">📊 Clustering</button>
-            <button class="tab-btn {'active' if st.session_state.page == 'Laporan' else ''}" onclick="navigate('Laporan')">📑 Laporan</button>
+            <button class="tab-btn {'active' if st.session_state.page == 'Beranda' else ''}" onclick="window.streamlitApi.runMethod('navigate', {{'page': 'Beranda'}})">🏠 Beranda</button>
+            <button class="tab-btn {'active' if st.session_state.page == 'Stok' else ''}" onclick="window.streamlitApi.runMethod('navigate', {{'page': 'Stok'}})">📦 Stok</button>
+            <button class="tab-btn {'active' if st.session_state.page == 'Clustering' else ''}" onclick="window.streamlitApi.runMethod('navigate', {{'page': 'Clustering'}})">📊 Clustering</button>
+            <button class="tab-btn {'active' if st.session_state.page == 'Laporan' else ''}" onclick="window.streamlitApi.runMethod('navigate', {{'page': 'Laporan'}})">📑 Laporan</button>
         </div>
         <div class="profile-container">
             <div>
@@ -260,19 +262,10 @@ def show_header():
             </div>
             <div class="profile-avatar">A</div>
             <div class="dropdown-menu">
-                <a href="#" class="dropdown-item" onclick="logout()">Logout</a>
+                <a href="#" class="dropdown-item" onclick="window.streamlitApi.runMethod('logout', '')">Logout</a>
             </div>
         </div>
     </div>
-    <script>
-        function navigate(page) {
-            window.streamlitApi.runMethod('navigate', {page});
-        }
-        
-        function logout() {
-            window.streamlitApi.runMethod('logout', '');
-        }
-    </script>
     """, unsafe_allow_html=True)
 
 # Handle navigasi dan logout
@@ -542,3 +535,4 @@ elif st.session_state.page == "Clustering":
     clustering_page()
 elif st.session_state.page == "Laporan":
     laporan_page()
+
